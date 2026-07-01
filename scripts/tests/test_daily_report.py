@@ -1,4 +1,4 @@
-import importlib.util, pathlib
+import importlib.util, os, pathlib, tempfile
 spec = importlib.util.spec_from_file_location(
     "daily_report",
     pathlib.Path(__file__).resolve().parent.parent / "daily_report.py",
@@ -26,3 +26,17 @@ def test_resolve_range_explicit_date():
 def test_resolve_range_7d_returns_english_label():
     since, until, label = mod.resolve_range("7d")
     assert "days" in label.lower()  # no Russian strings
+
+
+def test_list_projects_skips_adjust_and_example_configs():
+    with tempfile.TemporaryDirectory() as tmp:
+        for fname in ("example.yaml", "subs-app.yaml", "adjust.yaml", "adjust.example.yaml"):
+            open(os.path.join(tmp, fname), "w").close()
+        assert mod.list_projects(tmp) == ["example", "subs-app"]
+
+
+def test_adjust_campaign_data_returns_disabled_tuple_when_config_missing():
+    # reports/adjust.yaml doesn't exist in this repo checkout by default —
+    # the call must degrade gracefully instead of raising FileNotFoundError.
+    result = mod.adjust_campaign_data("AcmeApp", "2026-01-01", "2026-01-01")
+    assert result == (None, None)

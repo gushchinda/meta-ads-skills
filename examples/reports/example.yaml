@@ -4,10 +4,10 @@ conversion_action: purchase
 # extra_metrics.installs makes report_kind == "install" (shows inst / CPI)
 extra_metrics:
   installs: omni_app_install
-# opt into Adjust ROAS lines (needs examples/reports/adjust.example.yaml + ADJUST_API_TOKEN)
-adjust: true
-# opt into an AppLovin section sourced from the shared Adjust map
-show_applovin: true
+# set to true and create reports/adjust.yaml + ADJUST_API_TOKEN to enable Adjust ROAS lines
+adjust: false
+# AppLovin section is sourced from the shared Adjust map — leave false unless adjust: true above
+show_applovin: false
 accounts:
   - id: act_XXXXXXXXX
     name: AcmeApp

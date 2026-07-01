@@ -53,7 +53,8 @@ def load_client_config(path: Path) -> ClientConfig:
 
 def resolve_client_config(client_name: str, clients_dir: Path = None) -> ClientConfig:
     if clients_dir is None:
-        clients_dir = Path(__file__).parent.parent / "clients"
+        # scripts/deploy_creatives/client_config.py -> repo root is three parents up
+        clients_dir = Path(__file__).resolve().parent.parent.parent / "clients"
     path = clients_dir / f"{client_name}.yaml"
     if not path.exists():
         raise FileNotFoundError(f"Client config not found: {client_name} (looked at {path})")

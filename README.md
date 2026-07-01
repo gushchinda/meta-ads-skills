@@ -21,7 +21,7 @@ Claude Code skills for Meta Ads user-acquisition — daily reporting, ROAS predi
 ## Setup
 
 1. Copy `.env.example` → `.env` and fill in the keys you need (see Integrations below).
-2. Copy `examples/reports/*.yaml` → `reports/`, one file per project you want to report on. If you use the `adjust: true` flag on a project, also copy `examples/reports/adjust.example.yaml` → `reports/adjust.yaml` (the report script expects it at that exact path).
+2. Copy the project configs you want — `examples/reports/example.yaml`, `examples/reports/subs-app.yaml` — into `reports/`, one file per project you want to report on. Don't blanket-copy `examples/reports/*.yaml`: `adjust.example.yaml` isn't a project config. If you set `adjust: true` on a project, separately copy `examples/reports/adjust.example.yaml` → `reports/adjust.yaml` (the report script expects it at that exact path) and fill in `ADJUST_API_TOKEN`.
 3. Copy `examples/clients/example.yaml` → `clients/` and edit it with your real ad account ID, page/pixel IDs, targeting, and destination — this drives the `deploy-creatives` skill.
 
 ## Integrations

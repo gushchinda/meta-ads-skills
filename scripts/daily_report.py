@@ -73,12 +73,13 @@ def get_chat_id():
         raise RuntimeError("TELEGRAM_CHAT_ID not set (.env)")
     return cid
 
-def list_projects():
-    d = os.path.join(ROOT, "reports")
+def list_projects(reports_dir=None):
+    d = reports_dir or os.path.join(ROOT, "reports")
     if not os.path.isdir(d):
         return []
     return sorted(f[:-5] for f in os.listdir(d)
-                  if f.endswith(".yaml") and f != "adjust.yaml")
+                  if f.endswith(".yaml") and f != "adjust.yaml"
+                  and not f.endswith(".example.yaml"))
 
 def report_kind(cfg, acct):
     """install | subscribe | purchase | purchase_roas — from config, never project name."""
@@ -115,7 +116,10 @@ def adjust_campaign_data(project, since, until):
     """Adjust Report Service per campaign. Revenue = ad_revenue + IAP(revenue)×0.70.
     ROAS = adj_revenue / cost (Meta: 'cost'; AppLovin: 'network_cost'). roas_d3 likewise on d3.
     Returns (map, m2_multipliers) or (None, None). map[key] = {roas,roas_d3,partner,cost,installs,rev,rev_d3,name}."""
-    cfg = yaml.safe_load(open(os.path.join(ROOT, "reports", "adjust.yaml")))
+    path = os.path.join(ROOT, "reports", "adjust.yaml")
+    if not os.path.exists(path):
+        return None, None
+    cfg = yaml.safe_load(open(path))
     pj = (cfg.get("projects") or {}).get(project)
     if not pj: return None, None
     load_env()
