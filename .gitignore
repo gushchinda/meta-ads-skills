@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 creatives/
 *.local
+
+# SDD scratch (review packages, briefs) — never publish
+.superpowers/
