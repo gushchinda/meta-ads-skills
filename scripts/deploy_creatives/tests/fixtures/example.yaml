@@ -1,0 +1,42 @@
+name: AcmeApp
+product: AcmeApp - Example Subscription App
+
+ad_account_id: act_123456789
+account_name: AcmeApp
+currency: USD
+
+facebook_page_id: "111111111111111"
+instagram_actor_id: "222222222222222"
+
+creatives_root: ./examples/media/example
+
+campaign_defaults:
+  objective: OUTCOME_SALES
+  status: PAUSED
+  buying_type: AUCTION
+  bid_strategy: LOWEST_COST_WITHOUT_CAP
+  special_ad_categories: []
+
+adset_defaults:
+  daily_budget: 2000
+  billing_event: IMPRESSIONS
+  optimization_goal: OFFSITE_CONVERSIONS
+  targeting:
+    age_min: 18
+    age_max: 65
+    geo_locations:
+      countries:
+        - US
+        - CA
+      location_types:
+        - home
+        - recent
+    targeting_automation:
+      advantage_audience: 1
+
+destination:
+  type: WEBSITE
+  url: "https://example.com"
+  cta: DOWNLOAD
+
+pixel_id: "333333333333333"
