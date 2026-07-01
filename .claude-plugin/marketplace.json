@@ -1,0 +1,11 @@
+{
+  "name": "meta-ads-skills",
+  "owner": { "name": "gushchinda", "url": "https://github.com/gushchinda" },
+  "plugins": [
+    {
+      "name": "meta-ads-skills",
+      "source": "./",
+      "description": "Meta Ads UA skills: report, predict, generate-creatives, deploy-creatives."
+    }
+  ]
+}
