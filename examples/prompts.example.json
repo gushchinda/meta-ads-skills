@@ -1,0 +1,20 @@
+{
+  "campaign": "launch",
+  "aspect_ratio": "9:16",
+  "reference_images": [],
+  "concepts": [
+    {
+      "slug": "hero",
+      "variations": [
+        "A bright lifestyle photo of a person smiling at their phone, warm morning light, minimal background, bold short headline 'Start today', app store style, high contrast.",
+        "Same concept, evening mood, cool tones, headline 'Your daily habit', clean sans-serif, lots of negative space."
+      ]
+    },
+    {
+      "slug": "before_after",
+      "variations": [
+        "Split-screen before/after concept, left side dull, right side vibrant, single-word labels 'Before' and 'After', no paragraphs."
+      ]
+    }
+  ]
+}

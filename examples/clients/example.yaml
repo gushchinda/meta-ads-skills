@@ -1,0 +1,37 @@
+name: AcmeApp
+product: AcmeApp - Example Subscription App
+ad_account_id: act_XXXXXXXXX
+account_name: AcmeApp
+currency: USD
+
+facebook_page_id: "<FACEBOOK_PAGE_ID>"
+instagram_actor_id: "<INSTAGRAM_ACTOR_ID>"
+pixel_id: "<PIXEL_ID>"
+
+# Local path (or synced Drive folder) holding creatives to deploy.
+creatives_root: <DRIVE>/AcmeApp/meta/for_testing
+
+campaign_defaults:
+  objective: OUTCOME_SALES
+  status: PAUSED
+  buying_type: AUCTION
+  bid_strategy: LOWEST_COST_WITHOUT_CAP
+  special_ad_categories: []
+adset_defaults:
+  daily_budget: 2000            # minor units (2000 = $20.00)
+  billing_event: IMPRESSIONS
+  optimization_goal: OFFSITE_CONVERSIONS
+  targeting:
+    age_min: 18
+    age_max: 65
+    geo_locations:
+      countries:
+        - US
+destination:
+  type: WEBSITE
+  url: https://example.com
+  cta: SHOP_NOW
+
+# Optional test-campaign wiring for the deploy skill
+test_campaign_id: "<TEST_CAMPAIGN_ID>"
+template_adset_id: "<TEMPLATE_ADSET_ID>"

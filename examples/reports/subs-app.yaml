@@ -1,0 +1,6 @@
+name: SubsApp
+currency: USD
+conversion_action: subscribe        # report_kind == "subscribe" (sub / CPA)
+accounts:
+  - id: act_YYYYYYYYY
+    name: SubsApp Main

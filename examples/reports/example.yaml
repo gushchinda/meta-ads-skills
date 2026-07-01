@@ -1,0 +1,13 @@
+name: AcmeApp
+currency: EUR
+conversion_action: purchase
+# extra_metrics.installs makes report_kind == "install" (shows inst / CPI)
+extra_metrics:
+  installs: omni_app_install
+# opt into Adjust ROAS lines (needs examples/reports/adjust.example.yaml + ADJUST_API_TOKEN)
+adjust: true
+# opt into an AppLovin section sourced from the shared Adjust map
+show_applovin: true
+accounts:
+  - id: act_XXXXXXXXX
+    name: AcmeApp

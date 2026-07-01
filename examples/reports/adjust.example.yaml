@@ -1,0 +1,14 @@
+api_url: https://automate.adjust.com/reports-service/report
+tokens:
+  # token value comes from ADJUST_API_TOKEN in .env; this maps a logical name
+  default: env:ADJUST_API_TOKEN
+projects:
+  example:
+    token: default
+    app_tokens:
+      - "<ADJUST_APP_TOKEN>"
+    m2_multiplier:
+      Facebook: 2.01
+      Applovin: 2.53
+    ad_revenue_divisor:
+      Applovin: 2
