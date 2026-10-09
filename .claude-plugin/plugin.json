@@ -1,9 +1,22 @@
 {
   "name": "meta-ads-skills",
-  "version": "0.1.0",
-  "description": "Claude Code skills for Meta Ads user-acquisition: daily reporting, ROAS prediction, creative generation, and creative deployment.",
-  "author": { "name": "gushchinda", "url": "https://github.com/gushchinda" },
+  "version": "0.2.0",
+  "description": "Claude Code skills for Meta Ads user-acquisition: reporting, ROAS prediction, creative generation and deployment, new-creative monitoring, creative testing, test-adset stop/early stop, and budget scaling.",
+  "author": {
+    "name": "gushchinda",
+    "url": "https://github.com/gushchinda"
+  },
   "homepage": "https://github.com/gushchinda/meta-ads-skills",
   "license": "MIT",
-  "keywords": ["meta-ads", "facebook-ads", "user-acquisition", "roas", "creatives", "marketing"]
+  "keywords": [
+    "meta-ads",
+    "facebook-ads",
+    "user-acquisition",
+    "roas",
+    "creatives",
+    "marketing",
+    "creative-testing",
+    "autostop",
+    "budget-scaling"
+  ]
 }

@@ -8,3 +8,5 @@ creatives/
 
 # SDD scratch (review packages, briefs) — never publish
 .superpowers/
+/run/
+/rules/

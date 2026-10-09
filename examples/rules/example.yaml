@@ -1,0 +1,55 @@
+# One file per project: copy to rules/<project>.yaml in the directory you run
+# the scripts from. Used by creative-monitor, creative-testing, test-adset-stop
+# and budget-scaling. All money is in the ad account's currency, major units.
+name: AcmeApp
+currency: USD
+accounts: [act_XXXXXXXXXXXX]
+
+# Predicted LTV of ONE paying user. Every money rule is derived from it.
+# No ltv → the stop and scaling rules report and do nothing.
+ltv: 40
+conversion_event: purchase        # action_type counted as a purchase
+lead_event: mobile_app_install    # upper-funnel event for the early stop
+                                  # (e.g. lead, complete_registration, start_trial)
+roas_multiplier: 1.0              # optional correction, shown in every report line
+campaign_match: []                # optional substrings, if accounts are shared between projects
+
+creatives:
+  dir: /path/to/AcmeApp/creatives  # local or synced drive folder
+  include: []                       # top-level folders to watch (empty = all)
+  exclude: [_archive, _wip, _static, _raw]
+  withdrawn: []                     # file names to treat as NOT uploaded again
+
+testing:
+  campaign_id: "120000000000000000"        # the TEST… campaign new adsets go into
+  template_adset_id: "120000000000000001"  # live adset whose settings are copied
+  daily_budget: 50
+  status: ACTIVE                    # ACTIVE = launch immediately; PAUSED = review first
+  page_id: "100000000000000"
+  instagram_user_id: null
+  link: https://example.com/landing
+  link_caption: null
+  cta: LEARN_MORE                   # DOWNLOAD, SIGN_UP, INSTALL_MOBILE_APP, …
+  title: null                       # empty texts are not sent at all
+  message: null
+  url_tags: "utm_source=meta&utm_medium=cpc&utm_campaign={{campaign.name}}&utm_content={{ad.name}}"
+
+stop_rule:
+  enabled: true
+  campaign_prefix: TEST
+  alpha: 0.05                 # tolerated chance of killing a break-even adset
+  p_max: 0.20                 # most optimistic lead→purchase rate
+  roas_target: 1.0            # CPA target = ltv / roas_target
+  min_spend_cpa_mult: 2       # never touch an adset below 2 × CPA spend
+  lead_spend_threshold: 100   # early-stop checkpoint (raised to S_min if lower)
+
+scaling:
+  enabled: true
+  campaign_prefix: SCALING
+  window_days: 7
+  lag_days: 1                 # 1 = window ends yesterday; raise if conversions arrive late
+  pivot: 1.0                  # Predicted ROAS 100%
+  step_up: 0.15
+  step_down: 0.15
+  min_budget: 5
+  max_budget: 500
