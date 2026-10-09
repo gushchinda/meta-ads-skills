@@ -8,7 +8,7 @@
     {
       "name": "meta-ads-skills",
       "source": "./",
-      "description": "Meta Ads UA skills: report, predict, generate-creatives, deploy-creatives, creative-monitor, creative-testing, test-adset-stop, budget-scaling."
+      "description": "Meta Ads UA skills: report, predict, generate-creatives, deploy-creatives, creative-monitor, creative-testing, test-pulse, test-adset-stop, budget-scaling."
     }
   ]
 }

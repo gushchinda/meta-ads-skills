@@ -43,6 +43,16 @@ stop_rule:
   min_spend_cpa_mult: 2       # never touch an adset below 2 × CPA spend
   lead_spend_threshold: 100   # early-stop checkpoint (raised to S_min if lower)
 
+rotation:                     # test pulse: slots + caps + FIFO queue
+  enabled: false              # true = pulse.py launches queued folders itself
+  max_slots: 5                # concurrent tests (legacy ACTIVE adsets count too)
+  test_days: 7
+  test_cap: null              # lifetime spend per test; null = ltv × cap_ltv_mult
+  cap_ltv_mult: 5             # → $200 cap, $28.57/day for ltv 40
+  weekly_guide: 700           # informational only
+  hold: []                    # folders that must wait
+  geo: null                   # e.g. [US, GB, AU]; null = template adset's
+
 scaling:
   enabled: true
   campaign_prefix: SCALING

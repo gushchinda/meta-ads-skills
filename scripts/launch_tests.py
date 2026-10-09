@@ -156,46 +156,27 @@ def creative_spec(t, name, video_id=None, image_url=None, image_hash=None):
     return body
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("project")
-    ap.add_argument("--folder", action="append", default=[], help="concept folder; repeatable")
-    ap.add_argument("--as", dest="merge_as", help="merge all --folder into ONE adset with this name")
-    ap.add_argument("--geo", help="comma-separated ISO countries; default = template adset's")
-    ap.add_argument("--link", help="destination URL; default = testing.link")
-    ap.add_argument("--paused", action="store_true", help="create adsets and ads PAUSED")
-    ap.add_argument("--dry", action="store_true", help="show the plan, create nothing")
-    a = ap.parse_args()
-
-    pj = common.load_project(a.project)
-    t = dict(pj["testing"])
-    if a.link:
-        t["link"] = a.link
+def check_config(pj, t):
     missing = [k for k in ("campaign_id", "template_adset_id", "page_id", "link") if not t.get(k)]
     if missing or not pj["accounts"] or not pj["creatives"]["dir"]:
-        sys.exit(f"{a.project}: set testing.{', testing.'.join(missing) or '…'}, accounts, creatives.dir")
-    geo = [c.strip().upper() for c in a.geo.split(",")] if a.geo else None
-    if geo and not all(re.fullmatch(r"[A-Z]{2}", c) for c in geo):
-        sys.exit("geo must be 2-letter country codes: " + a.geo)
-    status = "PAUSED" if a.paused else t["status"]
+        raise SystemExit(f"{pj['key']}: set testing.{', testing.'.join(missing) or '…'}, accounts, creatives.dir")
+
+
+def launch(pj, groups, geo=None, link=None, status=None, daily_budget=None):
+    """Create one adset per group and its ads. Returns {concept: adset_id} for this call.
+
+    Shared by the CLI below and by pulse.py (rotation). Idempotent through
+    the journal: a concept or file already done is skipped.
+    """
+    t = dict(pj["testing"])
+    if link:
+        t["link"] = link
+    check_config(pj, t)
+    status = status or t["status"]
+    budget = float(daily_budget or t["daily_budget"])
     acct = pj["accounts"][0]
-
-    groups = collect(pj, a.folder, a.merge_as)
-    total = sum(len(v) for v in groups.values())
-    budget = float(t["daily_budget"])
-    print(f"to launch: {total} creatives in {len(groups)} adset(s) · {common.money(pj, budget)}/day each "
-          f"· +{common.money(pj, budget * len(groups))}/day total · status {status}")
-    if geo:
-        print("geo:", ", ".join(geo), "(instead of template's)")
-    for g, fs in groups.items():
-        print(f"  {g} — {len(fs)}")
-        for p in fs:
-            print("     ", os.path.basename(p))
-    if a.dry or not total:
-        return
-
-    take_lock(a.project)
-    statef = f"deploy-{a.project}.json"
+    take_lock(pj["key"])
+    statef = f"deploy-{pj['key']}.json"
     state = common.load_state(statef)
     for k in ("adsets", "media", "ads"):
         state.setdefault(k, {})
@@ -285,7 +266,43 @@ def main():
             created += 1
             print(f"  ✓ {name} → {ad['id']}")
 
-    print(f"\nthis run: {len([c for c in groups if c in state['adsets']])} adset(s), {created} new ad(s)")
+    done = {c: state["adsets"][c] for c in groups if c in state["adsets"]}
+    print(f"\nthis run: {len(done)} adset(s), {created} new ad(s)")
+    return done
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("project")
+    ap.add_argument("--folder", action="append", default=[], help="concept folder; repeatable")
+    ap.add_argument("--as", dest="merge_as", help="merge all --folder into ONE adset with this name")
+    ap.add_argument("--geo", help="comma-separated ISO countries; default = template adset's")
+    ap.add_argument("--link", help="destination URL; default = testing.link")
+    ap.add_argument("--paused", action="store_true", help="create adsets and ads PAUSED")
+    ap.add_argument("--dry", action="store_true", help="show the plan, create nothing")
+    a = ap.parse_args()
+
+    pj = common.load_project(a.project)
+    check_config(pj, dict(pj["testing"], link=a.link or pj["testing"]["link"]))
+    geo = [c.strip().upper() for c in a.geo.split(",")] if a.geo else None
+    if geo and not all(re.fullmatch(r"[A-Z]{2}", c) for c in geo):
+        sys.exit("geo must be 2-letter country codes: " + a.geo)
+    status = "PAUSED" if a.paused else pj["testing"]["status"]
+
+    groups = collect(pj, a.folder, a.merge_as)
+    total = sum(len(v) for v in groups.values())
+    budget = float(pj["testing"]["daily_budget"])
+    print(f"to launch: {total} creatives in {len(groups)} adset(s) · {common.money(pj, budget)}/day each "
+          f"· +{common.money(pj, budget * len(groups))}/day total · status {status}")
+    if geo:
+        print("geo:", ", ".join(geo), "(instead of template's)")
+    for g, fs in groups.items():
+        print(f"  {g} — {len(fs)}")
+        for p in fs:
+            print("     ", os.path.basename(p))
+    if a.dry or not total:
+        return
+    launch(pj, groups, geo=geo, link=a.link, status=status)
 
 
 if __name__ == "__main__":

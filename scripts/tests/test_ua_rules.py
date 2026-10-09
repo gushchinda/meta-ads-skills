@@ -177,3 +177,89 @@ def test_prefix_and_match():
     assert not common.has_prefix("Scaling TEST", "TEST")
     assert common.matches({"campaign_match": []}, "anything")
     assert not common.matches({"campaign_match": ["acme"]}, "Other app")
+
+
+# --- test-pulse -----------------------------------------------------------
+
+import pulse  # noqa: E402
+
+
+def _pj(**over):
+    raw = {"name": "Acme", "accounts": ["act_1"], "ltv": 40,
+           "rotation": {"max_slots": 3, "enabled": True}}
+    raw.update(over)
+    return common.project_from_dict("acme", raw)
+
+
+def test_cap_and_daily():
+    assert pulse.test_cap(_pj()) == 200 and pulse.daily_for(200, 7) == 28.57
+    assert pulse.test_cap(_pj(rotation={"test_cap": 135})) == 135
+    assert pulse.test_cap(_pj(ltv=None)) is None
+
+
+def test_end_reason():
+    assert pulse.end_reason("PAUSED", 10, 200, 1, 7) == "EARLY_STOP"
+    assert pulse.end_reason("CAMPAIGN_PAUSED", 10, 200, 1, 7) == "EARLY_STOP"
+    assert pulse.end_reason("ACTIVE", 200, 200, 3, 7) == "CAP"
+    assert pulse.end_reason("ACTIVE", 50, 200, 7.0, 7) == "AGE"
+    assert pulse.end_reason("IN_PROCESS", 0, 200, 0, 7) is None
+
+
+def test_fifo_oldest_first_and_hold():
+    q = {"b": {"first_seen": "2026-10-02"}, "a": {"first_seen": "2026-10-03"}, "c": {"first_seen": "2026-10-01"}}
+    assert pulse.fifo(q, {"c"}) == ["b", "a"]
+
+
+def test_run_project_rotation_end_to_end(monkeypatch, tmp_path):
+    """Two managed tests (one stopped by the stop rule, one over cap), one legacy
+    adset, three queued folders and 3 slots → 2 tests end; UGC + legacy keep
+    2 slots, so exactly one folder launches — the oldest in the queue."""
+    monkeypatch.setattr(common, "STATE_DIR", tmp_path)
+    now = datetime.datetime(2026, 10, 9, 2, 0, tzinfo=datetime.timezone.utc)
+    common.save_state("pulse-acme.json", {"tests": {
+        "s1": {"name": "Hooks", "folder": "Hooks", "launched_at": "2026-10-06T02:00:00+00:00", "cap": 200, "days": 7, "status": "RUNNING"},
+        "s2": {"name": "Pain", "folder": "Pain", "launched_at": "2026-10-03T02:00:00+00:00", "cap": 200, "days": 7, "status": "RUNNING"},
+        "s3": {"name": "UGC", "folder": "UGC", "launched_at": "2026-10-08T02:00:00+00:00", "cap": 200, "days": 7, "status": "RUNNING"},
+    }, "queue": {"Old": {"first_seen": "2026-10-01T00:00:00+00:00"}}})
+    adsets = [dict(id="s1", name="01. Hooks", status="PAUSED", effective_status="PAUSED"),
+              dict(id="s2", name="02. Pain", status="ACTIVE", effective_status="ACTIVE"),
+              dict(id="s3", name="03. UGC", status="ACTIVE", effective_status="ACTIVE"),
+              dict(id="L1", name="legacy", status="ACTIVE", effective_status="ACTIVE")]
+    ins = {"s1": 90, "s2": 205, "s3": 20, "L1": 500}
+
+    def get(path, **kw):
+        if path.endswith("/campaigns"):
+            return [dict(id="c1", name="TEST. Acme", effective_status="ACTIVE")]
+        if path == "c1/adsets":
+            return adsets
+        if path == "c1/insights" and kw.get("level") == "adset":
+            return [dict(adset_id=k, spend=str(v), actions=[{"action_type": "purchase", "value": "1"}]) for k, v in ins.items()]
+        if path == "c1/insights" and kw.get("level") == "ad":
+            return [dict(ad_id="a1", impressions="100")]
+        if path == "c1/ads":
+            return [dict(id="a1", adset_id="s3"), dict(id="a2", adset_id="s3")]
+        if path == "c1/insights":
+            return [dict(spend="321.5")]
+        raise AssertionError(path)
+
+    posts, launched = [], []
+    monkeypatch.setattr(common, "get", get)
+    monkeypatch.setattr(common, "post", lambda path, f: posts.append((path, f)) or {"success": True})
+    monkeypatch.setattr(launch, "collect", lambda pj, f, m: {"Old": ["o.mp4"], "New1": ["n1.mp4", "n2.mp4"], "New2": ["x.mp4"]})
+
+    def fake_launch(pj, groups, daily_budget=None, geo=None):
+        launched.append((list(groups), daily_budget))
+        return {g: "new-" + g for g in groups}
+
+    monkeypatch.setattr(launch, "launch", fake_launch)
+    pj = _pj()
+    pj["creatives"]["dir"] = str(tmp_path)
+    res = pulse.run_project(pj, dry=False, now=now)
+
+    assert {(e["name"], e["reason"]) for e in res["ended"]} == {("Hooks", "EARLY_STOP"), ("Pain", "CAP")}
+    assert posts == [("s2", {"status": "PAUSED"})]          # stop-rule pause is never repeated
+    assert launched == [(["Old"], 28.57)]                   # FIFO, daily = cap / days
+    assert res["slots"] == {"active": 3, "max": 3}
+    html_text = pulse.html_page([res], now, False)
+    assert "Test pulse" in html_text and "legacy" in html_text and "zero delivery: 1/2" in html_text
+    (tmp_path / "pulse.html").write_text(html_text)

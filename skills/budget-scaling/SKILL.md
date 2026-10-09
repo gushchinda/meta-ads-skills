@@ -63,10 +63,11 @@ scaling: {campaign_prefix: SCALING, window_days: 7, lag_days: 1, pivot: 1.0,
           step_up: 0.15, step_down: 0.15, min_budget: 5, max_budget: 500}
 ```
 
-## Daily schedule (all four skills)
+## Daily schedule (all five ops skills)
 
 ```
 04:00  creative_monitor.py --telegram   # what's new
 04:10  adset_stop.py --telegram         # pause losers first
+04:15  pulse.py --telegram               # rotate tests, HTML pulse
 04:20  budget_scaling.py --telegram     # then move budgets
 ```

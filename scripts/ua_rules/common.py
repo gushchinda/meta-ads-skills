@@ -65,6 +65,16 @@ DEFAULTS = {
         "min_spend_cpa_mult": 2,
         "lead_spend_threshold": 100,
     },
+    "rotation": {
+        "enabled": False,          # True = pulse.py launches queued folders into free slots
+        "max_slots": 5,
+        "test_days": 7,
+        "test_cap": None,          # lifetime spend per test; None = ltv × cap_ltv_mult
+        "cap_ltv_mult": 5,
+        "weekly_guide": None,      # informational weekly TEST spend guide
+        "hold": [],
+        "geo": None,
+    },
     "scaling": {
         "enabled": True,
         "campaign_prefix": "SCALING",

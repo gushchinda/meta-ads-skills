@@ -1,6 +1,6 @@
 # meta-ads-skills
 
-Claude Code skills for Meta Ads user-acquisition — daily reporting, ROAS prediction, creative generation and deployment, plus a daily ops loop: new-creative monitoring, creative testing, statistical stop / early stop of test adsets, and ROAS-based budget scaling.
+Claude Code skills for Meta Ads user-acquisition — daily reporting, ROAS prediction, creative generation and deployment, plus a daily ops loop: new-creative monitoring, creative testing, test pulse (slot rotation), statistical stop / early stop of test adsets, and ROAS-based budget scaling.
 
 ## Install
 
@@ -20,6 +20,7 @@ Claude Code skills for Meta Ads user-acquisition — daily reporting, ROAS predi
 | `creative-monitor` | Scan a project's creative folder against the ad account and list what is not launched yet — one message per project. | `what new creatives do we have?` |
 | `creative-testing` | Launch new creatives into the `TEST…` campaign: one concept folder = one adset cloned from a template adset; resumable, no duplicates. | `launch Hooks_v2 into tests for AcmeApp` |
 | `test-adset-stop` | Stop and early-stop losing test adsets with a Poisson rule derived from LTV: early stop on leads, daily stop on purchases. | `run the autostop` / `why was this adset stopped?` |
+| `test-pulse` | Morning test rotation + HTML status page: N slots per project, spend cap and lifetime per test, FIFO queue of new folders, early stops picked up, zero-delivery flagged. | `пульс тестов` / `test pulse` |
 | `budget-scaling` | Daily ±15% budget moves on Predicted ROAS for `SCALING…` campaigns (CBO or per-adset ABO), one move per day, floor/ceiling. | `scale budgets` |
 
 ### Daily ops loop
@@ -31,6 +32,7 @@ Campaign names carry the role: `TEST…` campaigns receive new concepts and are 
 ```
 python scripts/creative_monitor.py --telegram   # what's new in the folders
 python scripts/adset_stop.py --telegram         # pause losing test adsets first
+python scripts/pulse.py --telegram              # rotate tests into free slots + HTML pulse
 python scripts/budget_scaling.py --telegram     # then move scaling budgets
 python scripts/launch_tests.py <project> --dry  # on demand: launch a new batch into tests
 ```
@@ -62,6 +64,7 @@ python scripts/creative_monitor.py [project ...] [--days N] [--all] [--telegram]
 python scripts/launch_tests.py <project> [--folder NAME ...] [--as NAME] [--geo US,GB] [--link URL] [--paused] [--dry]
 python scripts/adset_stop.py [project ...] [--dry] [--telegram] | --describe <project>
 python scripts/budget_scaling.py [project ...] [--dry] [--force] [--telegram]
+python scripts/pulse.py [project ...] [--dry] [--telegram] [--out DIR]
 ```
 
 Omit `<project>` in `daily_report.py` to report on every config under `reports/`. `--print` writes to stdout instead of sending to Telegram.
