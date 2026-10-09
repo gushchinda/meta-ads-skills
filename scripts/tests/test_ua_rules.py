@@ -228,6 +228,14 @@ def test_run_project_rotation_end_to_end(monkeypatch, tmp_path):
     ins = {"s1": 90, "s2": 205, "s3": 20, "L1": 500}
 
     def get(path, **kw):
+        if path == "act_1":
+            return {"timezone_name": "Europe/Berlin", "currency": "USD"}
+        if path == "act_1/advideos":
+            return [dict(id="v1", created_time="2026-10-01T10:00:00+0000")]
+        if path.startswith("new-"):
+            return dict(id=path, name="04. " + path[4:], status="ACTIVE", effective_status="IN_PROCESS",
+                        campaign_id="c1", daily_budget="2857",
+                        targeting={"geo_locations": {"countries": ["US", "GB"]}})
         if path.endswith("/campaigns"):
             return [dict(id="c1", name="TEST. Acme", effective_status="ACTIVE")]
         if path == "c1/adsets":
@@ -237,7 +245,8 @@ def test_run_project_rotation_end_to_end(monkeypatch, tmp_path):
         if path == "c1/insights" and kw.get("level") == "ad":
             return [dict(ad_id="a1", impressions="100")]
         if path == "c1/ads":
-            return [dict(id="a1", adset_id="s3"), dict(id="a2", adset_id="s3")]
+            return [dict(id="a1", adset_id="s3"), dict(id="a2", adset_id="s3", created_time="2026-10-08T03:00:00+0000",
+                         issues_info=[{"error_type": "SOFT_ERROR", "error_code": 1, "error_summary": "Region needs verification"}])]
         if path == "c1/insights":
             return [dict(spend="321.5")]
         raise AssertionError(path)
@@ -259,7 +268,22 @@ def test_run_project_rotation_end_to_end(monkeypatch, tmp_path):
     assert {(e["name"], e["reason"]) for e in res["ended"]} == {("Hooks", "EARLY_STOP"), ("Pain", "CAP")}
     assert posts == [("s2", {"status": "PAUSED"})]          # stop-rule pause is never repeated
     assert launched == [(["Old"], 28.57)]                   # FIFO, daily = cap / days
-    assert res["slots"] == {"active": 3, "max": 3}
-    html_text = pulse.html_page([res], now, False)
-    assert "Test pulse" in html_text and "legacy" in html_text and "zero delivery: 1/2" in html_text
-    (tmp_path / "pulse.html").write_text(html_text)
+    assert res["slots"] == {"active": 3, "max": 3, "free": 0, "new": 1}
+    assert res["slot_state"] == "full"
+    assert res["ended"][0]["replacement"]["folder"] == "Old"
+    assert res["daily_after"] - res["daily_before"] == pytest.approx(28.57)
+    assert res["issues"] == [dict(type="SOFT_ERROR", code="1", summary="Region needs verification", ads=1)]
+    import pulse_report
+    for lang, words in (("en", ["Test pulse", "Unmanaged test", "No impressions: 1/2 ads", "Region needs verification"]),
+                        ("ru", ["Пульс тестов", "Неуправляемый тест", "Без показов: 1/2", "Остановки и замены"])):
+        page = pulse_report.html_page([res], now, False, lang, "Europe/Berlin")
+        assert all(w in page for w in words), lang
+        assert pulse_report.summary(res, False, lang)
+
+
+def test_slot_state():
+    assert pulse.slot_state(6, 5, 0, []) == "overflow"
+    assert pulse.slot_state(5, 5, 0, ["x"]) == "full"
+    assert pulse.slot_state(2, 5, 3, []) == "free_no_queue"
+    assert pulse.slot_state(2, 5, 3, ["x"]) == "free"
+    assert pulse.slot_state(0, 0, 0, ["x"]) == "queue_only"

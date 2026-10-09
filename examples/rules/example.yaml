@@ -2,6 +2,7 @@
 # the scripts from. Used by creative-monitor, creative-testing, test-adset-stop
 # and budget-scaling. All money is in the ad account's currency, major units.
 name: AcmeApp
+icon: null                        # optional app icon URL for the pulse page
 currency: USD
 accounts: [act_XXXXXXXXXXXX]
 
@@ -52,6 +53,8 @@ rotation:                     # test pulse: slots + caps + FIFO queue
   weekly_guide: 700           # informational only
   hold: []                    # folders that must wait
   geo: null                   # e.g. [US, GB, AU]; null = template adset's
+  monthly_target: 125         # creatives per 30 days (optional progress bars)
+  extra_events: [complete_registration]   # more events shown per test
 
 scaling:
   enabled: true

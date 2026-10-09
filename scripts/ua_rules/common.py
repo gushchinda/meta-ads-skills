@@ -74,6 +74,8 @@ DEFAULTS = {
         "weekly_guide": None,      # informational weekly TEST spend guide
         "hold": [],
         "geo": None,
+        "monthly_target": None,    # creatives per 30 days, shown as progress bars
+        "extra_events": [],        # more action_types to show per test, e.g. [complete_registration]
     },
     "scaling": {
         "enabled": True,
@@ -237,7 +239,7 @@ def has_prefix(name, prefix):
 
 def money(pj, v):
     sym = {"USD": "$", "EUR": "€", "GBP": "£"}.get(pj["currency"], pj["currency"] + " ")
-    return f"{sym}{v:,.2f}"
+    return f"{'−' if v < 0 else ''}{sym}{abs(v):,.2f}"
 
 
 # --- state ----------------------------------------------------------------

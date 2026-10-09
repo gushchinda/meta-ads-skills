@@ -20,36 +20,41 @@ cap and a lifetime; finished tests free their slot; the next folder from the que
 ## Every morning (`python scripts/pulse.py`)
 
 1. **Reconcile** managed tests with Meta. Not ACTIVE any more → paused by someone else (usually `test-adset-stop`)
-   → `EARLY_STOP`, slot freed. Never pause again, never resume.
+   → `EARLY_STOP`, slot freed, the stop rule's receipt attached. Never pause again, never resume.
 2. **End** tests that reached the cap (`CAP`) or `test_days` (`AGE`) → pause, slot freed.
 3. **Queue** rebuilt from the folders; folders already launched disappear from it by themselves.
 4. **Free slots**: `rotation.enabled: true` → launch the oldest queued folders (one adset each, daily = cap/days).
-   `enabled: false` → only say what is next in line.
+   `enabled: false` → only say what is next in line. **Overflow** (more active tests than slots, because of manual or
+   legacy adsets) → no launches, and nothing is stopped to make room.
 5. **Report**: `run/test-pulse-<date>.html` + a short text per project (Telegram with `--telegram`).
 
 ```
-python scripts/pulse.py --dry                 # reconcile + plan, change nothing
-python scripts/pulse.py                       # rotate + report
-python scripts/pulse.py acme --telegram --out public/   # put the page where you host reports
+python scripts/pulse.py --dry                           # reconcile + plan, change nothing
+python scripts/pulse.py                                 # rotate + report
+python scripts/pulse.py --lang ru --tz Asia/Novosibirsk # Russian page, local time next to UTC
+python scripts/pulse.py --telegram --out public/        # put the page where you host reports
 ```
 
-## Short summary (one per project)
+## The page, top to bottom
 
-```
-AcmeApp · test pulse · slots 5/5 · cap $200.00 / 7 d = $28.57/day
-⏹ Hooks_v2 — EARLY_STOP · $96.10, 0 purchase
-⏹ Pain — CAP · $201.40, 3 purchase
-▶️ launched Statics_10 (6 creatives) → 1202…
-queue: 2 folder(s) / 15 creatives · week TEST spend $412.00 / $700.00
-```
+1. **Header**: date, Meta snapshot time, next pass (UTC + `--tz`).
+2. **Deviations**: slot overflow, tests paused outside the rotation (with the stop-rule reason, e.g. `2 ≤ 3` leads),
+   Meta errors on ads grouped by error code, launch/pause failures. Nothing to show = "no deviations".
+3. **Project cards** side by side: icon, account time zone and currency, `active / max` slots with a segmented bar
+   (overflow in red), slot status in words, new tests today, test limit `cap / 7 days`, check `daily × 7 = cap`,
+   sum of daily budgets of all active TEST adsets, LTV. **Week · informational**: TEST spend vs guide, remaining
+   limits of active tests, guide − spend − remaining, previous week; ready / HOLD folders. **30 full days**:
+   videos in the folder, videos uploaded to Meta, creatives in finished tests (bars vs `monthly_target`), ads
+   without impressions.
+4. **Result of this pass** per project: launched yes/no, adset name and id, campaign, folder and count, limit and
+   daily, geo with exclusions, end date, status read back from Meta; daily sum of active TEST before → after.
+5. **Stops and replacements**: folder · id, reason, spend, age, which folder replaced it, stop-rule receipt.
+6. **Active tests per project**: status, campaign, geo, daily, managed/unmanaged, age bar, spend/cap bar
+   (unmanaged: "cap does not apply"), events (`conversion_event`, `lead_event`, `extra_events`), queue with
+   QUEUED/HOLD and first-seen time, Meta issues.
+7. **Queue-only projects** (`max_slots: 0`), then **sources and limits**.
 
-## HTML page
-
-Per project card: slots `active / max`, LTV and cap, week TEST spend vs `weekly_guide` and the remaining caps of running
-tests (informational, never blocks a launch), ended / launched / next-in-line list, a tile per running test with
-**age bar (d / 7)** and **spend bar ($ / cap)**, purchases and leads, **zero-delivery ads** count, legacy tiles, queue.
-
-Publish it where the team can open it (static hosting, an artifact, a shared drive) and send the link — the page is
+Publish it where the team can open it (static hosting, an artifact, a shared drive) and send the link. The page is
 self-contained, light/dark, mobile-friendly.
 
 ## Rules
@@ -75,6 +80,9 @@ rotation:
   weekly_guide: 700
   hold: []
   geo: null             # [US, GB, AU] to override the template adset's countries
+  monthly_target: 125   # optional: creatives per 30 days, shown as bars
+  extra_events: [complete_registration]
+icon: https://example.com/icon.png   # optional, shown on the project card
 ```
 
 Needs the `testing:` section as well (campaign, template adset, page, link) — launches go through `creative-testing`.
